@@ -6,6 +6,7 @@ import {
   Download, ZoomIn, ArrowRight, Quote, ShieldCheck, Sparkles,
   Play, Printer, Infinity as InfinityIcon, Smartphone, ArrowLeft,
   Facebook, MessageCircle, Lock, Search, PartyPopper, Moon,
+  Pause, Volume2, VolumeX, Minimize2,
 } from "lucide-react";
 
 /* ------------------------------------------------------------------ */
@@ -1276,6 +1277,141 @@ function Contact() {
 /* ------------------------------------------------------------------ */
 /* App shell                                                            */
 /* ------------------------------------------------------------------ */
+/* ------------------------------------------------------------------ */
+/* Floating Video — a corner picture-in-picture widget that stays put  */
+/* while the page scrolls. Mobile-friendly, play/pause + mute controls. */
+/* ------------------------------------------------------------------ */
+function FloatingVideo() {
+  const videoRef = useRef(null);
+  const [visible, setVisible] = useState(true);
+  const [minimized, setMinimized] = useState(false);
+  const [playing, setPlaying] = useState(false);
+  const [muted, setMuted] = useState(true);
+
+  const togglePlay = () => {
+    const v = videoRef.current;
+    if (!v) return;
+    if (v.paused) {
+      v.play();
+      setPlaying(true);
+    } else {
+      v.pause();
+      setPlaying(false);
+    }
+  };
+
+  const toggleMute = () => {
+    const v = videoRef.current;
+    if (!v) return;
+    v.muted = !v.muted;
+    setMuted(v.muted);
+  };
+
+  const restore = () => {
+    setMinimized(false);
+  };
+
+  if (!visible) return null;
+
+  // Minimized state: small round bubble, tap to bring the video back
+  if (minimized) {
+    return (
+      <button
+        onClick={restore}
+        aria-label="Expand video"
+        className="fixed z-40 bottom-5 right-5 w-14 h-14 rounded-full flex items-center justify-center transition-transform duration-300 hover:scale-105"
+        style={{
+          background: `linear-gradient(135deg, ${ROYAL}, ${NAVY})`,
+          border: `2px solid ${GOLD}`,
+          boxShadow: "0 12px 30px -8px rgba(0,0,0,0.5)",
+        }}
+      >
+        <Play size={20} className="text-white ml-0.5" fill="white" />
+      </button>
+    );
+  }
+
+  return (
+    <div
+      className="fixed z-40 bottom-5 right-4 md:bottom-6 md:right-6 w-36 sm:w-48 md:w-64 rounded-2xl overflow-hidden group"
+      style={{
+        border: `1px solid rgba(212,175,55,0.4)`,
+        boxShadow: "0 20px 45px -12px rgba(0,0,0,0.55)",
+        background: INK,
+        animation: "modalIn 0.4s ease",
+      }}
+    >
+      <div className="relative w-full aspect-video">
+        <video
+          ref={videoRef}
+          src="/videos/student-productivity.mp4"
+          poster="/videos/student-productivity-poster.jpg"
+          muted={muted}
+          loop
+          playsInline
+          preload="metadata"
+          className="w-full h-full object-cover"
+          onPlay={() => setPlaying(true)}
+          onPause={() => setPlaying(false)}
+        />
+
+        {/* Play / pause control, center */}
+        <button
+          onClick={togglePlay}
+          aria-label={playing ? "Pause video" : "Play video"}
+          className="absolute inset-0 flex items-center justify-center transition-colors duration-300"
+          style={{ background: playing ? "transparent" : "rgba(11,18,32,0.35)" }}
+        >
+          <span
+            className="w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-transform duration-300 group-hover:scale-105"
+            style={{ background: "rgba(255,255,255,0.92)", opacity: playing ? 0 : 1 }}
+          >
+            {playing ? (
+              <Pause size={18} style={{ color: NAVY }} />
+            ) : (
+              <Play size={18} style={{ color: NAVY }} className="ml-0.5" />
+            )}
+          </span>
+        </button>
+
+        {/* Top control row: mute, minimize, close */}
+        <div className="absolute top-1.5 right-1.5 flex items-center gap-1">
+          <button
+            onClick={toggleMute}
+            aria-label={muted ? "Unmute video" : "Mute video"}
+            className="w-6 h-6 rounded-full flex items-center justify-center"
+            style={{ background: "rgba(11,18,32,0.6)", color: "white" }}
+          >
+            {muted ? <VolumeX size={11} /> : <Volume2 size={11} />}
+          </button>
+          <button
+            onClick={() => setMinimized(true)}
+            aria-label="Minimize video"
+            className="w-6 h-6 rounded-full flex items-center justify-center"
+            style={{ background: "rgba(11,18,32,0.6)", color: "white" }}
+          >
+            <Minimize2 size={11} />
+          </button>
+          <button
+            onClick={() => setVisible(false)}
+            aria-label="Close video"
+            className="w-6 h-6 rounded-full flex items-center justify-center"
+            style={{ background: "rgba(11,18,32,0.6)", color: "white" }}
+          >
+            <X size={12} />
+          </button>
+        </div>
+      </div>
+
+      <div className="px-3 py-2" style={{ background: "rgba(255,255,255,0.04)" }}>
+        <p className="text-[11px] text-white/70 truncate" style={{ fontFamily: "'Manrope', sans-serif" }}>
+          Student Productivity
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const [scrolled, setScrolled] = useState(false);
   const [active, setActive] = useState("home");
@@ -1344,6 +1480,7 @@ export default function App() {
       <BuyNow onBuyClick={openBuyModal} />
       <Contact />
       {buyModalOpen && <BuyModal onClose={() => setBuyModalOpen(false)} />}
+      <FloatingVideo />
     </div>
   );
 }
